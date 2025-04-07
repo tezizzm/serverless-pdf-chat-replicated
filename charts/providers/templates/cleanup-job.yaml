@@ -1,0 +1,76 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "providers.fullname" . }}-cleanup
+  annotations:
+    "helm.sh/hook": post-delete
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+spec:
+  template:
+    metadata:
+      name: {{ include "providers.fullname" . }}-cleanup
+    spec:
+      serviceAccountName: {{ include "providers.fullname" . }}-cleanup
+      restartPolicy: Never
+      containers:
+      - name: kubectl
+        image: bitnami/kubectl:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Delete provider config
+          kubectl delete providerconfig.aws.upbound.io {{ .Values.aws.providerConfigName }} --ignore-not-found
+          
+          # Delete providers
+          {{- range $key, $value := .Values.aws.providers }}
+          {{- if ne $key "registry" }}
+          kubectl delete provider.pkg.crossplane.io {{ include "providers.fullname" $ }}-aws-{{ $key }} --ignore-not-found
+          {{- end }}
+          {{- end }}
+          
+          # Wait for cleanup to complete
+          sleep 10
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "providers.fullname" . }}-cleanup
+  annotations:
+    "helm.sh/hook": post-delete
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "providers.fullname" . }}-cleanup
+  annotations:
+    "helm.sh/hook": post-delete
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+rules:
+- apiGroups: ["aws.upbound.io"]
+  resources: ["providerconfigs"]
+  verbs: ["get", "list", "delete"]
+- apiGroups: ["pkg.crossplane.io"]
+  resources: ["providers"]
+  verbs: ["get", "list", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "providers.fullname" . }}-cleanup
+  annotations:
+    "helm.sh/hook": post-delete
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+subjects:
+- kind: ServiceAccount
+  name: {{ include "providers.fullname" . }}-cleanup
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "providers.fullname" . }}-cleanup
+  apiGroup: rbac.authorization.k8s.io
