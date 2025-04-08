@@ -1,0 +1,39 @@
+# Default values for serverless-pdf-chat
+# This is a YAML-formatted file.
+
+global:
+  namePrefix: "pdf-chat"
+  environment: "dev"
+
+aws:
+  region: "us-west-2"
+  providerConfigName: "default"
+  s3:
+    documentBucketName: null
+    corsEnabled: true
+    versioning: true
+    lifecycleRules:
+      - enabled: true
+        expiration: 90
+    publicAccessBlockConfiguration:
+      blockPublicAcls: true
+      blockPublicPolicy: true
+      ignorePublicAcls: true
+      restrictPublicBuckets: true
+        
+  dynamodb:
+    billingMode: "PAY_PER_REQUEST"
+    documentTable:
+      name: null
+    memoryTable:
+      name: null
+        
+  sqs:
+    embeddingQueue:
+      name: null
+      visibilityTimeout: 180
+      messageRetentionPeriod: 3600
+        
+tags:
+  environment: "dev"
+  application: "pdf-chat"

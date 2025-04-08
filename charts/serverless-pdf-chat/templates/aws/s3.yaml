@@ -1,0 +1,139 @@
+{{- if .Values.aws.s3 }}
+{{- $randomSuffix := substr 0 8 (sha256sum (printf "%s-%s" .Release.Name .Release.Namespace)) }}
+apiVersion: s3.aws.upbound.io/v1beta1
+kind: Bucket
+metadata:
+  name: {{ include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "documents") }}-{{ $randomSuffix }}
+  labels:
+    {{- include "serverless-pdf-chat.labels" . | nindent 4 }}
+spec:
+  forProvider:
+    region: {{ .Values.aws.region }}
+    tags:
+      {{- if .Values.aws.s3.documentBucketName }}
+      Name: {{ .Values.aws.s3.documentBucketName }}
+      {{- else }}
+      Name: {{ include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "documents") }}-{{ $randomSuffix }}
+      {{- end }}
+      {{- with .Values.tags }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+    forceDestroy: true
+  providerConfigRef:
+    name: {{ .Values.aws.providerConfigName }}
+---
+apiVersion: s3.aws.upbound.io/v1beta1
+kind: BucketServerSideEncryptionConfiguration
+metadata:
+  name: {{ include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "documents-encryption") }}
+  labels:
+    {{- include "serverless-pdf-chat.labels" . | nindent 4 }}
+spec:
+  forProvider:
+    region: {{ .Values.aws.region }}
+    bucketRef:
+      name: {{ include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "documents") }}-{{ $randomSuffix }}
+    rule:
+      - applyServerSideEncryptionByDefault:
+          - sseAlgorithm: "AES256"
+  providerConfigRef:
+    name: {{ .Values.aws.providerConfigName }}
+---
+apiVersion: s3.aws.upbound.io/v1beta1
+kind: BucketPublicAccessBlock
+metadata:
+  name: {{ include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "documents-public-access-block") }}
+  labels:
+    {{- include "serverless-pdf-chat.labels" . | nindent 4 }}
+spec:
+  forProvider:
+    region: {{ .Values.aws.region }}
+    bucketRef:
+      name: {{ include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "documents") }}-{{ $randomSuffix }}
+    blockPublicAcls: {{ .Values.aws.s3.publicAccessBlockConfiguration.blockPublicAcls }}
+    blockPublicPolicy: {{ .Values.aws.s3.publicAccessBlockConfiguration.blockPublicPolicy }}
+    ignorePublicAcls: {{ .Values.aws.s3.publicAccessBlockConfiguration.ignorePublicAcls }}
+    restrictPublicBuckets: {{ .Values.aws.s3.publicAccessBlockConfiguration.restrictPublicBuckets }}
+  providerConfigRef:
+    name: {{ .Values.aws.providerConfigName }}
+
+{{- if .Values.aws.s3.versioning }}
+---
+apiVersion: s3.aws.upbound.io/v1beta1
+kind: BucketVersioning
+metadata:
+  name: {{ include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "documents-versioning") }}
+  labels:
+    {{- include "serverless-pdf-chat.labels" . | nindent 4 }}
+spec:
+  forProvider:
+    region: {{ .Values.aws.region }}
+    bucketRef:
+      name: {{ include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "documents") }}-{{ $randomSuffix }}
+    versioningConfiguration:
+      - status: Enabled
+  providerConfigRef:
+    name: {{ .Values.aws.providerConfigName }}
+{{- end }}
+
+{{- if .Values.aws.s3.lifecycleRules }}
+---
+apiVersion: s3.aws.upbound.io/v1beta1
+kind: BucketLifecycleConfiguration
+metadata:
+  name: {{ include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "documents-lifecycle") }}
+  labels:
+    {{- include "serverless-pdf-chat.labels" . | nindent 4 }}
+spec:
+  forProvider:
+    region: {{ .Values.aws.region }}
+    bucketRef:
+      name: {{ include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "documents") }}-{{ $randomSuffix }}
+    rule:
+      {{- range .Values.aws.s3.lifecycleRules }}
+      - id: {{ .id | default "default-rule" }}
+        status: {{ if .enabled }}Enabled{{ else }}Disabled{{ end }}
+        {{- if .prefix }}
+        filter:
+          prefix: {{ .prefix | quote }}
+        {{- end }}
+        {{- if .expiration }}
+        expiration:
+          - days: {{ .expiration }}
+        {{- end }}
+      {{- end }}
+  providerConfigRef:
+    name: {{ .Values.aws.providerConfigName }}
+{{- end }}
+
+{{- if .Values.aws.s3.corsEnabled }}
+---
+apiVersion: s3.aws.upbound.io/v1beta1
+kind: BucketCorsConfiguration
+metadata:
+  name: {{ include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "documents-cors") }}
+  labels:
+    {{- include "serverless-pdf-chat.labels" . | nindent 4 }}
+spec:
+  forProvider:
+    region: {{ .Values.aws.region }}
+    bucketRef:
+      name: {{ include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "documents") }}-{{ $randomSuffix }}
+    corsRule:
+      - allowedHeaders:
+          - "*"
+        allowedMethods:
+          - GET
+          - PUT
+          - POST
+          - DELETE
+          - HEAD
+        allowedOrigins:
+          - "*"
+        exposeHeaders:
+          - ETag
+        maxAgeSeconds: 3000
+  providerConfigRef:
+    name: {{ .Values.aws.providerConfigName }}
+{{- end }}
+{{- end }}

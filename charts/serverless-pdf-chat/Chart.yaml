@@ -1,0 +1,6 @@
+apiVersion: v2
+name: serverless-pdf-chat
+description: A Helm chart for deploying serverless PDF chat infrastructure
+type: application
+version: 0.3.3
+appVersion: "1.0.0"

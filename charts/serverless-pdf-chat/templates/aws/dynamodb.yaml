@@ -1,0 +1,62 @@
+{{- if .Values.aws.dynamodb }}
+{{- if .Values.aws.dynamodb.documentTable }}
+---
+apiVersion: dynamodb.aws.upbound.io/v1beta1
+kind: Table
+metadata:
+  name: {{ include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "documents") }}
+  labels:
+    {{- include "serverless-pdf-chat.labels" $ | nindent 4 }}
+spec:
+  forProvider:
+    region: {{ .Values.aws.region }}
+    billingMode: {{ $.Values.aws.dynamodb.billingMode }}
+    tags:
+      {{- if .Values.aws.dynamodb.documentTable.name }}
+      Name: {{ .Values.aws.dynamodb.documentTable.name }}
+      {{- else }}
+      Name: {{ include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "documents") }}
+      {{- end }}
+      {{- with $.Values.tags }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+    attribute:
+    - name: userid
+      type: S
+    - name: documentid
+      type: S
+    hashKey: userid
+    rangeKey: documentid
+  providerConfigRef:
+    name: {{ $.Values.aws.providerConfigName }}
+{{- end }}
+
+{{- if .Values.aws.dynamodb.memoryTable }}
+---
+apiVersion: dynamodb.aws.upbound.io/v1beta1
+kind: Table
+metadata:
+  name: {{ include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "memory") }}
+  labels:
+    {{- include "serverless-pdf-chat.labels" $ | nindent 4 }}
+spec:
+  forProvider:
+    region: {{ .Values.aws.region }}
+    billingMode: {{ $.Values.aws.dynamodb.billingMode }}
+    tags:
+      {{- if .Values.aws.dynamodb.memoryTable.name }}
+      Name: {{ .Values.aws.dynamodb.memoryTable.name }}
+      {{- else }}
+      Name: {{ include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "memory") }}
+      {{- end }}
+      {{- with $.Values.tags }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+    attribute:
+    - name: SessionId
+      type: S
+    hashKey: SessionId
+  providerConfigRef:
+    name: {{ $.Values.aws.providerConfigName }}
+{{- end }}
+{{- end }}
