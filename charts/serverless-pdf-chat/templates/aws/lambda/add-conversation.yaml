@@ -1,0 +1,4 @@
+{{- $functionName := "add-conversation" -}}
+{{- $functionCamelCase := "addConversation" -}}
+{{- $functionConfig := index .Values.aws.lambda.functions $functionCamelCase -}}
+{{- include "serverless-pdf-chat.lambda-function" (dict "Values" .Values "Release" .Release "Chart" .Chart "functionName" $functionName "functionConfig" $functionConfig) -}}

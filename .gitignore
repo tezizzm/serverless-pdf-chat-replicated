@@ -49,5 +49,9 @@ Thumbs.db
 secrets/*
 work/*
 
+# Docker
+.dockerignore
+docker-compose.override.yml
+
 .aider*
 !.aider.conf.yml

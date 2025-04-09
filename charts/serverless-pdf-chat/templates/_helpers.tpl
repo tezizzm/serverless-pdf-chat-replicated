@@ -56,3 +56,60 @@ Create a resource name based on the global prefix, environment, and resource nam
 {{- $name := .name -}}
 {{- printf "%s-%s-%s" $values.global.namePrefix $values.global.environment $name -}}
 {{- end -}}
+
+{{/*
+Generate the S3 bucket name with the same random suffix
+*/}}
+{{- define "serverless-pdf-chat.bucketName" -}}
+{{- $randomSuffix := substr 0 8 (sha256sum (printf "%s-%s" .Release.Name .Release.Namespace)) -}}
+{{- include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "documents") }}-{{ $randomSuffix -}}
+{{- end -}}
+
+{{/*
+Generate an ARN for a resource
+Usage: {{ include "serverless-pdf-chat.arn" (dict "service" "s3" "region" .Values.aws.region "account" .Values.aws.accountId "resource" "my-bucket") }}
+*/}}
+{{- define "serverless-pdf-chat.arn" -}}
+{{- $service := .service -}}
+{{- $region := .region -}}
+{{- $account := .account -}}
+{{- $resource := .resource -}}
+{{- if eq $service "s3" -}}
+arn:aws:{{ $service }}:::{{ $resource }}
+{{- else if eq $service "logs" -}}
+arn:aws:{{ $service }}:*:*:{{ $resource }}
+{{- else -}}
+arn:aws:{{ $service }}:{{ $region }}:{{ $account }}:{{ $resource }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Generate an IAM role ARN
+Usage: {{ include "serverless-pdf-chat.roleArn" (dict "account" .Values.aws.accountId "name" "my-role-name") }}
+*/}}
+{{- define "serverless-pdf-chat.roleArn" -}}
+{{- $account := .account -}}
+{{- $name := .name -}}
+arn:aws:iam::{{ $account }}:role/{{ $name }}
+{{- end -}}
+
+{{/*
+Generate the DynamoDB document table name
+*/}}
+{{- define "serverless-pdf-chat.documentTableName" -}}
+{{- default (include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "documents")) .Values.aws.dynamodb.documentTable.name -}}
+{{- end -}}
+
+{{/*
+Generate the DynamoDB memory table name
+*/}}
+{{- define "serverless-pdf-chat.memoryTableName" -}}
+{{- default (include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "memory")) .Values.aws.dynamodb.memoryTable.name -}}
+{{- end -}}
+
+{{/*
+Generate the SQS embedding queue name
+*/}}
+{{- define "serverless-pdf-chat.embeddingQueueName" -}}
+{{- default (include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "embedding")) .Values.aws.sqs.embeddingQueue.name -}}
+{{- end -}}

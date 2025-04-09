@@ -1,0 +1,21 @@
+{{- $functionName := "generate-embeddings" -}}
+{{- $functionCamelCase := "generateEmbeddings" -}}
+{{- $functionConfig := index .Values.aws.lambda.functions $functionCamelCase -}}
+{{- template "serverless-pdf-chat.lambda-function" (dict "Values" .Values "Release" .Release "Chart" .Chart "functionName" $functionName "functionCamelCase" $functionCamelCase "functionConfig" $functionConfig) -}}
+
+---
+# SQS Event Source Mapping
+apiVersion: lambda.aws.upbound.io/v1beta1
+kind: EventSourceMapping
+metadata:
+  name: {{ include "serverless-pdf-chat.fullname" . }}-{{ $functionName }}-sqs-mapping
+  labels:
+    {{- include "serverless-pdf-chat.labels" . | nindent 4 }}
+spec:
+  forProvider:
+    region: {{ .Values.aws.region }}
+    functionName: {{ include "serverless-pdf-chat.fullname" . }}-{{ $functionName }}
+    eventSourceArn: {{ include "serverless-pdf-chat.arn" (dict "service" "sqs" "region" .Values.aws.region "account" .Values.aws.accountId "resource" (include "serverless-pdf-chat.embeddingQueueName" .)) }}
+    batchSize: 1
+  providerConfigRef:
+    name: {{ .Values.aws.providerConfigName }}
