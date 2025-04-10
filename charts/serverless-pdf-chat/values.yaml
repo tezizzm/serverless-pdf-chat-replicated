@@ -134,6 +134,25 @@ aws:
         memorySize: 512
         repository: "generate-response"
         tag: null
+  
+  apigateway:
+    api:
+      name: null
+      corsConfiguration:
+        allowOrigins:
+          - "*"
+        allowMethods:
+          - "*"
+        allowHeaders:
+          - "*"
+        allowCredentials: false
+    stage:
+      name: "dev"
+      autoDeploy: true
+    authorizer:
+      name: "CognitoAuthorizer"
+      type: "JWT"
+      identitySource: "$request.header.Authorization"
         
 tags:
   environment: "dev"
