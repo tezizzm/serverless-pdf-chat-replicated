@@ -1,0 +1,13 @@
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: {{ include "providers.fullname" . }}-kubernetes
+  labels:
+    {{- include "providers.labels" . | nindent 4 }}
+spec:
+  package: "{{ .Values.kubernetes.provider.registry }}/provider-kubernetes:{{ .Values.kubernetes.provider.version }}"
+  packagePullPolicy: IfNotPresent
+  revisionActivationPolicy: Automatic
+  revisionHistoryLimit: 1
+  runtimeConfigRef:
+    name: {{ include "providers.runtimeConfigName" . }}

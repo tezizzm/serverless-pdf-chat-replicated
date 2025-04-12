@@ -128,3 +128,31 @@ Generate the SQS embedding queue name
 {{- define "serverless-pdf-chat.embeddingQueueName" -}}
 {{- default (include "serverless-pdf-chat.resourceName" (dict "Values" .Values "name" "embedding")) .Values.aws.sqs.embeddingQueue.name -}}
 {{- end -}}
+
+{{/*
+Generate the frontend registry
+*/}}
+{{- define "serverless-pdf-chat.frontendRegistry" -}}
+{{- $registry := .Values.frontend.image.registry | default (printf "%s.dkr.ecr.%s.amazonaws.com" .Values.aws.accountId .Values.aws.region) -}}
+{{- $registry -}}
+{{- end -}}
+
+{{/*
+Generate the frontend image reference
+*/}}
+{{- define "serverless-pdf-chat.frontendImage" -}}
+{{- $registry := include "serverless-pdf-chat.frontendRegistry" . -}}
+{{- $repository := .Values.frontend.image.repository | default (printf "%s/frontend" .Values.images.repository) -}}
+{{- $tag := .Values.frontend.image.tag | default .Chart.AppVersion -}}
+{{- printf "%s/%s:%s" $registry $repository $tag -}}
+{{- end -}}
+
+{{/*
+Generate ECR auth config for Docker pull secrets
+*/}}
+{{- define "serverless-pdf-chat.ecrAuthConfig" -}}
+{{- $registry := include "serverless-pdf-chat.frontendRegistry" . -}}
+{{- $auth := printf "AWS:%s" .Values.aws.ecrAccessToken | b64enc -}}
+{{- $config := dict "auths" (dict $registry (dict "username" "AWS" "password" .Values.aws.ecrAccessToken "auth" $auth)) -}}
+{{- $config | toJson | b64enc -}}
+{{- end -}}

@@ -1,0 +1,33 @@
+# Default values for providerconfigs chart
+nameOverride: ""
+fullnameOverride: ""
+
+aws:
+  # AWS region where resources will be provisioned
+  region: "us-west-2"
+  # Name of the provider configuration
+  providerConfigName: "default"
+  # Authentication settings for AWS
+  authentication:
+    # Method to authenticate with AWS (secret, irsa, or ec2)
+    method: "secret"
+    # Secret configuration when using secret authentication method
+    secret:
+      # Name of the secret containing AWS credentials
+      name: "aws-credentials"
+      # Namespace where the secret is located
+      namespace: "crossplane-system"
+      # Keys in the secret for AWS credentials
+      keys:
+        # Key for AWS access key ID
+        accessKeyId: "aws_access_key_id"
+        # Key for AWS secret access key
+        secretAccessKey: "aws_secret_access_key"
+
+kubernetes:
+  # Name of the provider configuration
+  providerConfigName: "default"
+  # Authentication settings for Kubernetes
+  authentication:
+    # Source of credentials
+    source: "InjectedIdentity"

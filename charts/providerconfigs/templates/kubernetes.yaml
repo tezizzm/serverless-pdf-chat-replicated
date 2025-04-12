@@ -1,0 +1,10 @@
+apiVersion: kubernetes.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: {{ .Values.kubernetes.providerConfigName }}
+  labels:
+    {{- include "providerconfigs.labels" . | nindent 4 }}
+spec:
+  credentials:
+    source: {{ .Values.kubernetes.authentication.source }}
+  # No region field for Kubernetes provider

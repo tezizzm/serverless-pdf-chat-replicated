@@ -6,7 +6,6 @@ global:
   environment: "dev"
 
 images:
-  registry: "{{ .Values.aws.accountId }}.dkr.ecr.{{ .Values.aws.region }}.amazonaws.com"  # ECR registry
   repository: "serverless-pdf-chat"  # Repository name in ECR
   tag: null  # Will use Chart.AppVersion if null
   pullPolicy: "IfNotPresent"
@@ -17,10 +16,56 @@ application:
     modelId: "anthropic.claude-3-sonnet-20240229-v1:0"
     embeddingModelId: "amazon.titan-embed-text-v2:0"
 
+frontend:
+  enabled: true
+  image:
+    registry: null  # If null, will use global images.registry
+    repository: null  # If null, will use "{{ .Values.images.repository }}/frontend"
+    tag: null  # Will use Chart.AppVersion if null
+    pullPolicy: "IfNotPresent"
+    pullSecrets: []  # Array of existing secret names for private registries
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+  podSecurityContext: {}
+  securityContext: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+  service:
+    type: "ClusterIP"
+    port: 80
+    annotations: {}
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations: {}
+    hosts:
+      - host: "pdf-chat.example.com"
+        paths:
+          - path: "/"
+            pathType: "Prefix"
+    tls:
+      - secretName: "pdf-chat-tls"
+        hosts:
+          - "pdf-chat.example.com"
+
 aws:
   region: "us-west-2"
   accountId: "123456789012"  # This should be replaced with the actual AWS account ID
   providerConfigName: "default"
+  ecrAccessToken: ""  # ECR access token for authentication
   s3:
     corsEnabled: true
     versioning: true
@@ -45,23 +90,6 @@ aws:
       name: null
       visibilityTimeout: 180
       messageRetentionPeriod: 3600
-  
-  cognito:
-    userPool:
-      name: null
-      autoVerifiedAttributes: ["email"]
-      usernameAttributes: ["email"]
-      adminCreateUserConfig:
-        allowAdminCreateUserOnly: true
-      passwordPolicy:
-        minimumLength: 8
-        requireLowercase: true
-        requireNumbers: true
-        requireSymbols: true
-        requireUppercase: true
-    userPoolClient:
-      name: null
-      generateSecret: false
   
   iam:
     roles:
@@ -134,25 +162,6 @@ aws:
         memorySize: 512
         repository: "generate-response"
         tag: null
-  
-  apigateway:
-    api:
-      name: null
-      corsConfiguration:
-        allowOrigins:
-          - "*"
-        allowMethods:
-          - "*"
-        allowHeaders:
-          - "*"
-        allowCredentials: false
-    stage:
-      name: "dev"
-      autoDeploy: true
-    authorizer:
-      name: "CognitoAuthorizer"
-      type: "JWT"
-      identitySource: "$request.header.Authorization"
         
 tags:
   environment: "dev"

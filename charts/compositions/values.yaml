@@ -1,0 +1,12 @@
+# Default values for compositions chart
+
+# AWS configuration
+aws:
+  # AWS region where resources will be provisioned
+  region: "us-west-2"
+  # Name of the provider configuration
+  providerConfigName: "default"
+
+# Optional name overrides
+nameOverride: ""
+fullnameOverride: ""

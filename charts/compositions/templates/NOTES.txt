@@ -1,0 +1,42 @@
+Thank you for installing {{ .Chart.Name }}.
+
+INSTALLED COMPOSITIONS:
+----------------------
+The following Composite Resource Definition (XRD) and Composition have been installed:
+
+- CognitoAuthorizedAPI XRD and Composition
+
+USAGE:
+------
+You can now create instances of this composite resource:
+
+CognitoAuthorizedAPI example:
+```yaml
+apiVersion: serverlesspdfchat.shortrib.io/v1alpha1
+kind: CognitoAuthorizedAPI
+metadata:
+  name: serverless-pdf-chat
+  labels:
+    app.kubernetes.io/instance: serverless-pdf-chat
+    app.kubernetes.io/name: serverless-pdf-chat
+spec:
+  region: {{ .Values.aws.region }}
+  providerConfigRef:
+    name: {{ .Values.aws.providerConfigName }}
+  # Optional namespace for the ConfigMap (defaults to the resource's namespace)
+  configMapNamespace: pdf-chat
+  # Optional prefix/suffix for resource names
+  namePrefix: ""
+  nameSuffix: ""
+  tags:
+    Application: pdf-chat
+    Environment: dev
+```
+
+VERIFICATION:
+------------
+To verify the installation, run:
+  kubectl get xrd,composition
+
+To check the status of your composite resources:
+  kubectl get cognitoauthorizedapi
