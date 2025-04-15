@@ -361,9 +361,14 @@ spec:
         - type: FromCompositeFieldPath
           fromFieldPath: "spec.region"
           toFieldPath: "spec.forProvider.manifest.data.region"
-        # Patch the API endpoint
-        - type: FromCompositeFieldPath
-          fromFieldPath: "status.apiEndpoint"
+        # Patch the API endpoint with /dev/ appended
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: "status.apiEndpoint"
+            strategy: string
+            string:
+              fmt: "%s/dev/"
           toFieldPath: "spec.forProvider.manifest.data.apiEndpoint"
           policy:
             fromFieldPath: Required

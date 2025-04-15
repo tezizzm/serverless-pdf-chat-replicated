@@ -13,7 +13,7 @@ images:
 application:
   config:
     region: "us-west-2"
-    modelId: "anthropic.claude-3-sonnet-20240229-v1:0"
+    modelId: "meta.llama3-1-405b-instruct-v1:0"
     embeddingModelId: "amazon.titan-embed-text-v2:0"
 
 frontend:
@@ -24,6 +24,18 @@ frontend:
     tag: null  # Will use Chart.AppVersion if null
     pullPolicy: "IfNotPresent"
     pullSecrets: []  # Array of existing secret names for private registries
+  builderImage:
+    registry: null  # If null, will use global images.registry
+    repository: null  # If null, will use "{{ .Values.images.repository }}/builder"
+    tag: null  # Will use Chart.AppVersion if null
+    pullPolicy: "IfNotPresent"
+  builderResources:
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
   replicaCount: 1
   resources:
     limits:
