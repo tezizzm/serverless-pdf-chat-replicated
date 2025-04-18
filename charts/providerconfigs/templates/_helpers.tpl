@@ -40,6 +40,11 @@ helm.sh/chart: {{ include "providerconfigs.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- if .Values.commonLabels }}
+{{- range $key, $value := .Values.commonLabels }}
+{{ $key }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
 {{- end }}
 
 {{/*
@@ -71,21 +76,11 @@ Get the credentials secret key
 {{- "creds" }}
 {{- end }}
 
-{{/*
-Common labels
-*/}}
-{{- define "providerconfigs.commonLabels" -}}
-{{- if .Values.commonLabels }}
-{{- range $key, $value := .Values.commonLabels }}
-{{ $key }}: {{ $value | quote }}
-{{- end }}
-{{- end }}
-{{- end }}
 
 {{/*
 Common annotations
 */}}
-{{- define "providerconfigs.commonAnnotations" -}}
+{{- define "providerconfigs.annotations" -}}
 {{- if .Values.commonAnnotations }}
 {{- range $key, $value := .Values.commonAnnotations }}
 {{ $key }}: {{ $value | quote }}
