@@ -1,0 +1,66 @@
+{{- if .Values.serviceAccount.create }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "providers.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "providers.labels" . | nindent 4 }}
+    app.kubernetes.io/component: rbac
+  annotations:
+    {{- include "providers.annotations" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "providers.fullname" . }}-jobs
+  labels: {{- include "providers.labels" . | nindent 4 }}
+    app.kubernetes.io/component: rbac
+  annotations:
+    {{- include "providers.annotations" . | nindent 4 }}
+rules:
+- apiGroups:
+  - aws.upbound.io
+  resources:
+  - "*"
+  verbs:
+  - get
+  - list
+  - watch
+  - delete
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
+  - list
+  - watch
+  - delete
+- apiGroups:
+  - pkg.crossplane.io
+  resources:
+  - "*"
+  verbs:
+  - get
+  - list
+  - watch
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "providers.fullname" . }}-jobs
+  labels: {{- include "providers.labels" . | nindent 4 }}
+    app.kubernetes.io/component: rbac
+  annotations:
+    {{- include "providers.annotations" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "providers.fullname" . }}-jobs
+subjects:
+- kind: ServiceAccount
+  name: {{ include "providers.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}

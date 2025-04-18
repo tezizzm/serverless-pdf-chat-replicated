@@ -1,12 +1,60 @@
 # Default values for crossplane-providers chart
+
+# Global configuration
+global:
+  images:
+    # Global registry configuration. When set, overrides individual registry settings
+    # unless specifically overridden at the component level
+    registry: ""
+
 nameOverride: ""
 fullnameOverride: ""
 
+# Common labels
+commonLabels: {}
+# Add your custom labels here
+# team: platform
+# environment: production
+# cost-center: 12345
+
+# Common annotations
+commonAnnotations: {}
+# Add your custom annotations here
+# app.kubernetes.io/part-of: platform
+# app.kubernetes.io/documentation: https://example.com/docs
+  
+# ServiceAccount configuration
+serviceAccount:
+  # Specifies whether a ServiceAccount should be created
+  create: true
+  # The name of the ServiceAccount to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# Job configurations
+jobs:
+  waitReadyJob:
+    image:
+      # Can be overridden by global.images.registry
+      registry: "docker.io"
+      repository: "bitnami/kubectl"
+      tag: "latest"
+      pullPolicy: "IfNotPresent"
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1001
+      runAsGroup: 1001
+
 aws:
-  # AWS region where resources will be provisioned
-  region: "us-west-2"
-  # Default deployment runtime configuration
-  defaultDeploymentConfig:
+  # Deployment runtime configuration
+  deploymentRuntimeConfig:
     # Resource limits for provider controllers
     resources:
       limits:
@@ -22,50 +70,36 @@ aws:
       runAsGroup: 65532
   # AWS provider configurations
   providers:
-    # Registry for all providers
+    # Registry for all providers - can be overridden by global.images.registry
+    # Can be overridden by global.images.registry
     registry: "xpkg.upbound.io/upbound"
+    family:
+      package: "provider-family-aws"
+      version: "v1.21.1"
     iam:
       package: "provider-aws-iam"
       version: "v1.21.1"
-      controllerConfig: {}
     s3:
       package: "provider-aws-s3"
       version: "v1.21.1"
-      controllerConfig: {}
     dynamodb:
       package: "provider-aws-dynamodb"
       version: "v1.21.1"
-      controllerConfig: {}
     lambda:
       package: "provider-aws-lambda"
       version: "v1.21.1"
-      controllerConfig: {}
     sqs:
       package: "provider-aws-sqs"
       version: "v1.21.1"
-      controllerConfig: {}
     apigatewayv2:
       package: "provider-aws-apigatewayv2"
       version: "v1.21.1"
-      controllerConfig: {}
     cognitoidp:
       package: "provider-aws-cognitoidp"
       version: "v1.21.1"
-      controllerConfig: {}
-    bedrock:
-      package: "provider-aws-bedrock"
-      version: "v1.21.1"
-      controllerConfig: {}
-    cloudfront:
-      package: "provider-aws-cloudfront"
-      version: "v1.21.1"
-      controllerConfig: {}
-    secretsmanager:
-      package: "provider-aws-secretsmanager"
-      version: "v1.21.1"
-      controllerConfig: {}
 
 kubernetes:
   provider:
     version: "v0.17.2"
+    # Can be overridden by global.images.registry
     registry: "xpkg.upbound.io/upbound"

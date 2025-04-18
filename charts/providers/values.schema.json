@@ -2,6 +2,20 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
+    "global": {
+      "type": "object",
+      "properties": {
+        "images": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string",
+              "description": "Global registry configuration. When set, overrides individual registry settings unless specifically overridden at the component level"
+            }
+          }
+        }
+      }
+    },
     "nameOverride": {
       "type": "string",
       "description": "Override the name of the chart"
@@ -10,15 +24,129 @@
       "type": "string",
       "description": "Override the full name of the chart"
     },
+    "commonLabels": {
+      "type": "object",
+      "description": "Common labels to add to all resources",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "commonAnnotations": {
+      "type": "object",
+      "description": "Common annotations to add to all resources",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "description": "Specifies whether a ServiceAccount should be created",
+          "default": true
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the ServiceAccount to use. If not set and create is true, a name is generated."
+        }
+      }
+    },
+    "jobs": {
+      "type": "object",
+      "properties": {
+        "waitReadyJob": {
+          "type": "object",
+          "properties": {
+            "image": {
+              "type": "object",
+              "properties": {
+                "registry": {
+                  "type": "string",
+                  "description": "Registry for the wait-ready job image",
+                  "default": "docker.io"
+                },
+                "repository": {
+                  "type": "string",
+                  "description": "Repository for the wait-ready job image",
+                  "default": "bitnami/kubectl"
+                },
+                "tag": {
+                  "type": "string",
+                  "description": "Tag for the wait-ready job image",
+                  "default": "latest"
+                },
+                "pullPolicy": {
+                  "type": "string",
+                  "description": "Image pull policy for the wait-ready job",
+                  "default": "IfNotPresent",
+                  "enum": ["Always", "IfNotPresent", "Never"]
+                }
+              }
+            },
+            "resources": {
+              "type": "object",
+              "properties": {
+                "limits": {
+                  "type": "object",
+                  "properties": {
+                    "cpu": {
+                      "type": "string",
+                      "description": "CPU limit for wait-ready job",
+                      "default": "200m"
+                    },
+                    "memory": {
+                      "type": "string",
+                      "description": "Memory limit for wait-ready job",
+                      "default": "256Mi"
+                    }
+                  }
+                },
+                "requests": {
+                  "type": "object",
+                  "properties": {
+                    "cpu": {
+                      "type": "string",
+                      "description": "CPU request for wait-ready job",
+                      "default": "100m"
+                    },
+                    "memory": {
+                      "type": "string",
+                      "description": "Memory request for wait-ready job",
+                      "default": "128Mi"
+                    }
+                  }
+                }
+              }
+            },
+            "securityContext": {
+              "type": "object",
+              "properties": {
+                "runAsNonRoot": {
+                  "type": "boolean",
+                  "description": "Run wait-ready job as non-root",
+                  "default": true
+                },
+                "runAsUser": {
+                  "type": "integer",
+                  "description": "User ID to run wait-ready job",
+                  "default": 1001
+                },
+                "runAsGroup": {
+                  "type": "integer",
+                  "description": "Group ID to run wait-ready job",
+                  "default": 1001
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "aws": {
       "type": "object",
       "properties": {
-        "region": {
-          "type": "string",
-          "description": "AWS region where resources will be provisioned",
-          "default": "us-west-2"
-        },
-        "defaultDeploymentConfig": {
+        "deploymentRuntimeConfig": {
           "type": "object",
           "properties": {
             "resources": {
@@ -86,6 +214,21 @@
               "description": "Registry for all providers",
               "default": "xpkg.upbound.io/upbound"
             },
+            "family": {
+              "type": "object",
+              "properties": {
+                "package": {
+                  "type": "string",
+                  "description": "Package name for the AWS Family provider",
+                  "default": "provider-family-aws"
+                },
+                "version": {
+                  "type": "string",
+                  "description": "Version of the AWS Family provider",
+                  "default": "v1.21.1"
+                }
+              }
+            },
             "iam": {
               "type": "object",
               "properties": {
@@ -98,10 +241,6 @@
                   "type": "string",
                   "description": "Version of the IAM provider",
                   "default": "v1.21.1"
-                },
-                "controllerConfig": {
-                  "type": "object",
-                  "description": "Controller configuration for the IAM provider"
                 }
               }
             },
@@ -117,10 +256,6 @@
                   "type": "string",
                   "description": "Version of the S3 provider",
                   "default": "v1.21.1"
-                },
-                "controllerConfig": {
-                  "type": "object",
-                  "description": "Controller configuration for the S3 provider"
                 }
               }
             },
@@ -136,10 +271,6 @@
                   "type": "string",
                   "description": "Version of the DynamoDB provider",
                   "default": "v1.21.1"
-                },
-                "controllerConfig": {
-                  "type": "object",
-                  "description": "Controller configuration for the DynamoDB provider"
                 }
               }
             },
@@ -155,10 +286,6 @@
                   "type": "string",
                   "description": "Version of the Lambda provider",
                   "default": "v1.21.1"
-                },
-                "controllerConfig": {
-                  "type": "object",
-                  "description": "Controller configuration for the Lambda provider"
                 }
               }
             },
@@ -174,10 +301,6 @@
                   "type": "string",
                   "description": "Version of the SQS provider",
                   "default": "v1.21.1"
-                },
-                "controllerConfig": {
-                  "type": "object",
-                  "description": "Controller configuration for the SQS provider"
                 }
               }
             },
@@ -193,10 +316,6 @@
                   "type": "string",
                   "description": "Version of the API Gateway v2 provider",
                   "default": "v1.21.1"
-                },
-                "controllerConfig": {
-                  "type": "object",
-                  "description": "Controller configuration for the API Gateway v2 provider"
                 }
               }
             },
@@ -212,67 +331,6 @@
                   "type": "string",
                   "description": "Version of the Cognito IDP provider",
                   "default": "v1.21.1"
-                },
-                "controllerConfig": {
-                  "type": "object",
-                  "description": "Controller configuration for the Cognito IDP provider"
-                }
-              }
-            },
-            "bedrock": {
-              "type": "object",
-              "properties": {
-                "package": {
-                  "type": "string",
-                  "description": "Package name for the Bedrock provider",
-                  "default": "provider-aws-bedrock"
-                },
-                "version": {
-                  "type": "string",
-                  "description": "Version of the Bedrock provider",
-                  "default": "v1.21.1"
-                },
-                "controllerConfig": {
-                  "type": "object",
-                  "description": "Controller configuration for the Bedrock provider"
-                }
-              }
-            },
-            "cloudfront": {
-              "type": "object",
-              "properties": {
-                "package": {
-                  "type": "string",
-                  "description": "Package name for the CloudFront provider",
-                  "default": "provider-aws-cloudfront"
-                },
-                "version": {
-                  "type": "string",
-                  "description": "Version of the CloudFront provider",
-                  "default": "v1.21.1"
-                },
-                "controllerConfig": {
-                  "type": "object",
-                  "description": "Controller configuration for the CloudFront provider"
-                }
-              }
-            },
-            "secretsmanager": {
-              "type": "object",
-              "properties": {
-                "package": {
-                  "type": "string",
-                  "description": "Package name for the Secrets Manager provider",
-                  "default": "provider-aws-secretsmanager"
-                },
-                "version": {
-                  "type": "string",
-                  "description": "Version of the Secrets Manager provider",
-                  "default": "v1.21.1"
-                },
-                "controllerConfig": {
-                  "type": "object",
-                  "description": "Controller configuration for the Secrets Manager provider"
                 }
               }
             }

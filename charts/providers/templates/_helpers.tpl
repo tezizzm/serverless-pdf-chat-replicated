@@ -40,6 +40,22 @@ helm.sh/chart: {{ include "providers.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- if .Values.commonLabels }}
+{{- range $key, $value := .Values.commonLabels }}
+{{ $key }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Common annotations
+*/}}
+{{- define "providers.annotations" -}}
+{{- if .Values.commonAnnotations }}
+{{- range $key, $value := .Values.commonAnnotations }}
+{{ $key }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
 {{- end }}
 
 {{/*
@@ -51,31 +67,10 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-Get the credentials secret name
-*/}}
-{{- define "providers.secretName" -}}
-{{- .Values.aws.authentication.secret.name }}
-{{- end }}
-
-{{/*
-Get the credentials secret namespace
-*/}}
-{{- define "providers.secretNamespace" -}}
-{{- .Values.aws.authentication.secret.namespace }}
-{{- end }}
-
-{{/*
-Get the credentials secret key
-*/}}
-{{- define "providers.secretKey" -}}
-{{- "creds" }}
-{{- end }}
-
-{{/*
 Get the runtime config name
 */}}
 {{- define "providers.runtimeConfigName" -}}
-default
+{{ include "providers.fullname" . }}-runtime-config
 {{- end }}
 
 {{/*
@@ -83,5 +78,31 @@ Get the provider package URL
 */}}
 {{- define "providers.packageUrl" -}}
 {{- $provider := index .Values.aws.providers .providerName -}}
-{{- printf "%s/%s:%s" .Values.aws.providers.registry $provider.package $provider.version -}}
+{{- $registry := .Values.global.images.registry | default .Values.aws.providers.registry -}}
+{{- printf "%s/%s:%s" $registry $provider.package $provider.version -}}
+{{- end }}
+
+{{/*
+Get the ServiceAccount name for jobs
+*/}}
+{{- define "providers.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create }}
+{{- default (printf "%s-jobs" (include "providers.fullname" .)) .Values.serviceAccount.name }}
+{{- else }}
+{{- default "default" .Values.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{/*
+Get the registry for jobs
+*/}}
+{{- define "providers.jobRegistry" -}}
+{{- .Values.global.images.registry | default .Values.jobs.waitReadyJob.image.registry -}}
+{{- end }}
+
+{{/*
+Get the registry for Kubernetes provider
+*/}}
+{{- define "providers.kubernetesRegistry" -}}
+{{- .Values.global.images.registry | default .Values.kubernetes.provider.registry -}}
 {{- end }}

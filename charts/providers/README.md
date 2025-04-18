@@ -1,21 +1,21 @@
 # AWS Crossplane Providers Helm Chart
 
-This Helm chart installs and configures AWS Crossplane providers for the Serverless PDF Chat application.
+This Helm chart installs AWS Crossplane providers for the Serverless PDF Chat application.
 
 ## Overview
 
 The chart sets up the following AWS Crossplane providers:
 
+- AWS Family
 - IAM
 - S3
 - DynamoDB
 - Lambda
 - SQS
-- API Gateway
-- Cognito
-- Bedrock
-- CloudFront
-- Secrets Manager
+- API Gateway v2
+- Cognito IDP
+
+It also installs the Kubernetes provider.
 
 ## Prerequisites
 
@@ -25,11 +25,7 @@ The chart sets up the following AWS Crossplane providers:
 ## Installation
 
 ```bash
-helm install providers ./charts/providers \
-  --set aws.region=us-east-1 \
-  --set aws.authentication.method=secret \
-  --set-string aws.authentication.secret.name=aws-credentials \
-  --set-string aws.authentication.secret.namespace=crossplane-system
+helm install providers ./charts/providers
 ```
 
 ## Configuration
@@ -38,50 +34,51 @@ The following table lists the configurable parameters of the chart and their def
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `aws.region` | AWS region where resources will be provisioned | `us-east-1` |
-| `aws.providerConfigName` | Name of the provider configuration | `default` |
-| `aws.authentication.method` | Method to authenticate with AWS (secret, irsa, or ec2) | `secret` |
-| `aws.authentication.secret.name` | Name of the secret containing AWS credentials | `aws-credentials` |
-| `aws.authentication.secret.namespace` | Namespace where the secret is located | `crossplane-system` |
-| `aws.authentication.secret.keys.accessKeyId` | Key for AWS access key ID | `aws_access_key_id` |
-| `aws.authentication.secret.keys.secretAccessKey` | Key for AWS secret access key | `aws_secret_access_key` |
-| `aws.providers.iam.version` | Version of the IAM provider | `v0.41.0` |
-| `aws.providers.s3.version` | Version of the S3 provider | `v0.41.0` |
-| `aws.providers.dynamodb.version` | Version of the DynamoDB provider | `v0.41.0` |
-| `aws.providers.lambda.version` | Version of the Lambda provider | `v0.41.0` |
-| `aws.providers.sqs.version` | Version of the SQS provider | `v0.41.0` |
-| `aws.providers.apigateway.version` | Version of the API Gateway provider | `v0.41.0` |
-| `aws.providers.cognito.version` | Version of the Cognito provider | `v0.41.0` |
-| `aws.providers.bedrock.version` | Version of the Bedrock provider | `v0.41.0` |
-| `aws.providers.cloudfront.version` | Version of the CloudFront provider | `v0.41.0` |
-| `aws.providers.secretsmanager.version` | Version of the Secrets Manager provider | `v0.41.0` |
+| `global.images.registry` | Global registry for all images (overrides individual registry settings) | `""` |
+| `commonLabels` | Common labels to add to all resources | `{}` |
+| `commonAnnotations` | Common annotations to add to all resources | `{}` |
+| `serviceAccount.create` | Whether to create a ServiceAccount | `true` |
+| `serviceAccount.name` | Name of the ServiceAccount to use (if not created) | `""` |
+| `aws.deploymentRuntimeConfig.resources.limits.cpu` | CPU limit for provider controllers | `500m` |
+| `aws.deploymentRuntimeConfig.resources.limits.memory` | Memory limit for provider controllers | `512Mi` |
+| `aws.deploymentRuntimeConfig.resources.requests.cpu` | CPU request for provider controllers | `100m` |
+| `aws.deploymentRuntimeConfig.resources.requests.memory` | Memory request for provider controllers | `256Mi` |
+| `aws.providers.registry` | Registry for all providers (overridden by global registry if set) | `xpkg.upbound.io/upbound` |
+| `aws.providers.<provider>.package` | Package name for the provider | Varies by provider |
+| `aws.providers.<provider>.version` | Version of the provider | `v1.21.1` |
+| `kubernetes.provider.version` | Version of the Kubernetes provider | `v0.17.2` |
+| `kubernetes.provider.registry` | Registry for the Kubernetes provider (overridden by global registry if set) | `xpkg.upbound.io/upbound` |
+| `jobs.waitReadyJob.image.registry` | Registry for wait-ready job image (overridden by global registry if set) | `docker.io` |
+| `jobs.waitReadyJob.image.repository` | Repository for wait-ready job image | `bitnami/kubectl` |
+| `jobs.waitReadyJob.image.tag` | Tag for wait-ready job image | `latest` |
+| `jobs.waitReadyJob.image.pullPolicy` | Pull policy for wait-ready job image | `IfNotPresent` |
+| `jobs.waitReadyJob.resources.limits.cpu` | CPU limit for wait-ready job | `200m` |
+| `jobs.waitReadyJob.resources.limits.memory` | Memory limit for wait-ready job | `256Mi` |
+| `jobs.waitReadyJob.resources.requests.cpu` | CPU request for wait-ready job | `100m` |
+| `jobs.waitReadyJob.resources.requests.memory` | Memory request for wait-ready job | `128Mi` |
+| `jobs.waitReadyJob.securityContext.runAsNonRoot` | Run wait-ready job as non-root | `true` |
+| `jobs.waitReadyJob.securityContext.runAsUser` | User ID to run wait-ready job | `1001` |
+| `jobs.waitReadyJob.securityContext.runAsGroup` | Group ID to run wait-ready job | `1001` |
 
-## Authentication
+### Registry Configuration Examples
 
-The chart supports three authentication methods:
+To use a custom registry for all images:
 
-1. **Secret**: Uses a Kubernetes secret containing AWS credentials
-2. **IRSA**: Uses IAM Roles for Service Accounts
-3. **EC2**: Uses the EC2 instance profile
-
-### Using Secret Authentication
-
-Create a Kubernetes secret with your AWS credentials:
-
-```bash
-kubectl create secret generic aws-credentials \
-  --namespace crossplane-system \
-  --from-literal=aws_access_key_id=YOUR_ACCESS_KEY \
-  --from-literal=aws_secret_access_key=YOUR_SECRET_KEY
+```yaml
+global:
+  images:
+    registry: custom.registry.example.com
 ```
 
-Then install the chart with:
+To override specific registries while using global registry for others:
 
-```bash
-helm install providers ./charts/providers \
-  --set aws.authentication.method=secret \
-  --set aws.authentication.secret.name=aws-credentials \
-  --set aws.authentication.secret.namespace=crossplane-system
+```yaml
+global:
+  images:
+    registry: custom.registry.example.com
+aws:
+  providers:
+    registry: specific.registry.example.com
 ```
 
 ## License
