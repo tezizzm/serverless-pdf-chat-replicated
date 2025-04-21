@@ -9,10 +9,20 @@ spec:
       title: AWS Configuration
       description: |
       items:
+        - name: aws_account_id
+          title: AWS Account ID
+          help_text: >
+            The AWS account ID for backend resources
+          type: text
+          required: true
+          validation:
+            regex:
+              pattern: '^\d{12}$'
+              message: Please enter your 12-digit AWS account ID. You can find your account ID in the AWS Management Console.
         - name: aws_region
           title: AWS Region
           help_text: >
-            Select the AWS region to use
+            Select the AWS region to use for the backend
           type: dropdown
           required: true
           default: us-east-1
