@@ -6,9 +6,36 @@ spec:
   # chart identifies a matching chart from a .tgz
   chart:
     name: providers
-    chartVersion: 0.11.8
+    chartVersion: 0.12.5
   namespace: serverless-pdf-chat
   weight: -30
 
   helmUpgradeFlags:
     - --wait
+
+  values: 
+    global:
+      images:
+        pullSecrets:
+          - '{{repl ImagePullSecretName}}'
+
+  optionalValues:
+    - when: '{{repl HasLocalRegistry}}'
+      recursiveMerge: true
+      values: 
+        global:
+          images: 
+            registry: '{{repl LocalRegistryHost}}'
+
+    - when: '{{repl not HasLocalRegistry}}'
+      recursiveMerge: true
+      values: 
+        aws:
+          providers:
+            registry: 'images.shortrib.io/proxy/{{repl LicenseFieldValue "appSlug"}}/xpkg.upbound.io'
+        kubernetes:
+          provider:
+            registry: 'images.shortrib.io/proxy/{{repl LicenseFieldValue "appSlug"}}/xpkg.upbound.io'
+        jobs:
+          image:
+            registry: 'images.shortrib.io/proxy/{{repl LicenseFieldValue "appSlug"}}/index.docker.io'

@@ -11,3 +11,4 @@ spec:
   skipDependencyResolution: true
   runtimeConfigRef:
     name: {{ include "providers.runtimeConfigName" . }}
+  {{- include "providers.packagePullSecrets" (dict "root" . "scope" "aws") | nindent 2 }}

@@ -6,6 +6,8 @@ global:
     # Global registry configuration. When set, overrides individual registry settings
     # unless specifically overridden at the component level
     registry: ""
+    # Global pull secrets for all images
+    pullSecrets: []
 
 nameOverride: ""
 fullnameOverride: ""
@@ -33,6 +35,9 @@ serviceAccount:
 
 # Job configurations
 jobs:
+  # Image pull secrets for jobs
+  imagePullSecrets: []
+  # - name: regcred
   waitReadyJob:
     image:
       # Can be overridden by global.images.registry
@@ -53,6 +58,10 @@ jobs:
       runAsGroup: 1001
 
 aws:
+  # Image pull secrets for AWS providers
+  imagePullSecrets: []
+  # - name: regcred
+  
   # Deployment runtime configuration
   deploymentRuntimeConfig:
     # Resource limits for provider controllers
@@ -72,7 +81,9 @@ aws:
   providers:
     # Registry for all providers - can be overridden by global.images.registry
     # Can be overridden by global.images.registry
-    registry: "xpkg.upbound.io/upbound"
+    registry: "xpkg.upbound.io"
+    # Pull secrets for AWS providers
+    pullSecrets: []
     family:
       package: "provider-family-aws"
       version: "v1.21.1"
@@ -99,7 +110,11 @@ aws:
       version: "v1.21.1"
 
 kubernetes:
+  # Image pull secrets for Kubernetes provider
+  imagePullSecrets: []
+  # - name: regcred
+  
   provider:
     version: "v0.17.2"
     # Can be overridden by global.images.registry
-    registry: "xpkg.upbound.io/upbound"
+    registry: "xpkg.upbound.io"
