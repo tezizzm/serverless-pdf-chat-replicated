@@ -5,10 +5,7 @@ metadata:
   labels:
     {{- include "compositions.labels" . | nindent 4 }}
     provider: aws
-  annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "10"  # Run after XRD (weight 5)
-    {{- include "compositions.annotations" . | nindent 4 }}
+  annotations: {{- include "compositions.annotations" . | nindent 4 }}
 spec:
   compositeTypeRef:
     apiVersion: serverlesspdfchat.shortrib.io/v1alpha1
@@ -83,6 +80,23 @@ spec:
           policy:
             mergeOptions:
               keepMapValues: true
+        # Add explicit labels for integration selectors to find the API
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: "metadata.name"
+            strategy: string
+            string:
+              fmt: "%s"
+          toFieldPath: "metadata.labels['app.kubernetes.io/instance']"
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: "metadata.name"
+            strategy: string
+            string:
+              fmt: "%s"
+          toFieldPath: "metadata.labels['app.kubernetes.io/name']"
         # Store API endpoint in status
         - type: ToCompositeFieldPath
           fromFieldPath: "status.atProvider.apiEndpoint"
@@ -91,6 +105,10 @@ spec:
         - type: ToCompositeFieldPath
           fromFieldPath: "status.atProvider.id"
           toFieldPath: "status.apiId"
+      readinessChecks:
+        - type: NonEmpty
+          fieldPath: status.atProvider.id
+
 
     # User Pool
     - name: userpool
@@ -162,6 +180,9 @@ spec:
         - type: ToCompositeFieldPath
           fromFieldPath: "status.atProvider.endpoint"
           toFieldPath: "status.userPoolEndpoint"
+      readinessChecks:
+        - type: NonEmpty
+          fieldPath: status.atProvider.id
 
     # User Pool Client
     - name: userpoolclient
@@ -218,7 +239,6 @@ spec:
           fromFieldPath: "status.atProvider.id"
           toFieldPath: "status.userPoolClientId"
       readinessChecks:
-        - type: None
         - type: NonEmpty
           fieldPath: status.atProvider.id
 
@@ -282,6 +302,23 @@ spec:
           toFieldPath: "metadata.labels.authorizer"
           policy:
             fromFieldPath: Optional
+        # Add explicit labels for route selectors to find the authorizer
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: "metadata.name"
+            strategy: string
+            string:
+              fmt: "%s"
+          toFieldPath: "metadata.labels['app.kubernetes.io/instance']"
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: "metadata.name"
+            strategy: string
+            string:
+              fmt: "%s"
+          toFieldPath: "metadata.labels['app.kubernetes.io/name']"
         # Reference the API ID
         - type: FromCompositeFieldPath
           fromFieldPath: "status.apiId"
@@ -344,21 +381,12 @@ spec:
           toFieldPath: "spec.forProvider.manifest.metadata.name"
           policy:
             fromFieldPath: Optional
-        # First try to use the composite's namespace for the ConfigMap
+        # Use the claim's namespace for the ConfigMap
         - type: FromCompositeFieldPath
-          fromFieldPath: "metadata.namespace"
+          fromFieldPath: "spec.claimRef.namespace"
           toFieldPath: "spec.forProvider.manifest.metadata.namespace"
           policy:
-            fromFieldPath: Optional
-            # Use configMapNamespace as fallback if namespace is not set
-            mergeOptions:
-              keepMapValues: false
-        # Fall back to configMapNamespace if composite namespace is not available
-        - type: FromCompositeFieldPath
-          fromFieldPath: "spec.configMapNamespace"
-          toFieldPath: "spec.forProvider.manifest.metadata.namespace"
-          policy:
-            fromFieldPath: Optional
+            fromFieldPath: Required
         # Patch the region
         - type: FromCompositeFieldPath
           fromFieldPath: "spec.region"
@@ -373,19 +401,19 @@ spec:
               fmt: "%s/dev/"
           toFieldPath: "spec.forProvider.manifest.data.apiEndpoint"
           policy:
-            fromFieldPath: Required
+            fromFieldPath: Optional
         # Patch the User Pool ID
         - type: FromCompositeFieldPath
           fromFieldPath: "status.userPoolId"
           toFieldPath: "spec.forProvider.manifest.data.userPoolId"
           policy:
-            fromFieldPath: Required
+            fromFieldPath: Optional
         # Patch the User Pool Client ID
         - type: FromCompositeFieldPath
           fromFieldPath: "status.userPoolClientId"
           toFieldPath: "spec.forProvider.manifest.data.userPoolClientId"
           policy:
-            fromFieldPath: Required
+            fromFieldPath: Optional
         # Patch the provider config
         - type: FromCompositeFieldPath
           fromFieldPath: "spec.providerConfigRef.name"
@@ -403,8 +431,5 @@ spec:
         - type: ToCompositeFieldPath
           fromFieldPath: "spec.forProvider.manifest.metadata.name"
           toFieldPath: "status.configMapName"
-      readinessChecks:
-        - type: MatchCondition
-          matchCondition:
-            type: Ready
-            status: "True"
+      # Remove readiness check to avoid circular dependency
+      # Allow ConfigMap to be created and then updated when AWS resources are ready
