@@ -88,6 +88,60 @@ spec:
             repl{{ toJson $tls }}
           when: '{{repl ConfigOptionEquals "certificate_source" "generate_internal"}}'
 
+    - name: model
+      title: AI Model Configuration
+      description: |
+        Select the Amazon Bedrock models to use for text generation and document embeddings. Different models have different capabilities,
+        costs, and performance characteristics.
+        
+        Models are grouped by provider (Amazon, Anthropic, Cohere, Meta, and Mistral) and range from smaller,
+        faster models to larger models with more advanced reasoning capabilities.
+      items:
+        - name: model_id
+          title: Text Generation Model
+          help_text: >
+            Select the Amazon Bedrock model to use for generating text responses.
+            
+            We've pre-selected high-quality models that work well for chat applications.
+            Different models have different strengths, capabilities, and pricing.
+          type: dropdown
+          default: meta.llama3-1-405b-instruct-v1:0
+          items:
+            # Anthropic models
+            - name: anthropic.claude-3-5-sonnet-20241022-v2:0
+              title: Anthropic Claude 3.5 Sonnet - Balanced performance
+            - name: anthropic.claude-3-5-haiku-20241022-v1:0
+              title: Anthropic Claude 3.5 Haiku - Fast responses
+            - name: anthropic.claude-3-opus-20240229-v1:0
+              title: Anthropic Claude 3 Opus - Highest quality reasoning
+              
+            # Meta models
+            - name: meta.llama3-1-405b-instruct-v1:0
+              title: Meta Llama 3.1 405B - High performance
+              
+            # Mistral models
+            - name: mistral.mistral-large-2407-v1:0
+              title: Mistral Large - Excellent reasoning
+              
+            # Cohere models
+            - name: cohere.command-r-plus-v1:0
+              title: Cohere Command R+ - Strong context handling
+
+        - name: embedding_model_id
+          title: Embedding Model
+          help_text: >
+            Select the Amazon Bedrock model to use for generating document embeddings.
+            These models convert text into vector representations for semantic search.
+          type: dropdown
+          default: amazon.titan-embed-text-v2:0
+          items:
+            - name: amazon.titan-embed-text-v2:0
+              title: Amazon Titan Embed Text v2 - Recommended
+            - name: cohere.embed-english-v3
+              title: Cohere Embed English - High quality for English
+            - name: cohere.embed-multilingual-v3
+              title: Cohere Embed Multilingual - Supports multiple languages
+              
     - name: aws
       title: AWS Configuration
       description: |
